@@ -1,23 +1,25 @@
-import { ApolloServer, gql } from 'apollo-server';
+import { ApolloServer } from 'apollo-server';
 import 'reflect-metadata';
+import { buildSchema } from 'type-graphql';
 
+import path from 'node:path';
 import config from './config/config';
 import './database';
+import { ProductResolver } from './graphql/resolvers/ProductResolver';
 
-const server = new ApolloServer({
-  typeDefs: gql`
-    type Query {
-      _empty: Boolean
-    }
-  `,
+async function main() {
+  const schema = await buildSchema({
+    resolvers: [ProductResolver],
+    emitSchemaFile: path.join(__dirname, 'schema.gql'),
+  });
 
-  resolvers: {
-    Query: {
-      _empty: () => true,
-    },
-  },
-});
+  const server = new ApolloServer({
+    schema,
+  });
 
-server.listen(config.port).then(({ url }) => {
+  const { url } = await server.listen({ port: config.port });
+
   console.log(`🔥🔥 Server listening on ${url}`);
-});
+}
+
+main();
